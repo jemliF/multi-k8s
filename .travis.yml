@@ -1,0 +1,22 @@
+language: generic
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t jemlifathi/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true jemlifathi/react-test npm run test -- --coverage
+
+after_success:
+  - docker build -t jemlifathi/multi-client ./client
+  - docker build -t jemlifathi/multi-nginx ./nginx
+  - docker build -t jemlifathi/multi-server ./server
+  - docker build -t jemlifathi/multi-worker ./worker
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  - docker push jemlifathi/multi-client
+  - docker push jemlifathi/multi-nginx
+  - docker push jemlifathi/multi-server
+  - docker push jemlifathi/multi-worker
